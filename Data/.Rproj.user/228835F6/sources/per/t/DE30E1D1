@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1572444733034.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "292481717",
+    "id" : "DE30E1D1",
+    "lastKnownWriteTime" : 1572515798,
+    "last_content_update" : 1572515798434,
+    "path" : "~/Bioinf/r_statistics/Data/Project.R",
+    "project_path" : "Project.R",
+    "properties" : {
+        "cursorPosition" : "14,0",
+        "scrollLine" : "0"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

@@ -1,0 +1,254 @@
+---
+title: "Проект 1"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+---
+### Подготовка к работе
+Уcтановим рабочую директорию:
+
+```{r}
+wd <- '/home/maria/Bioinf/r_statistics/Data'
+```
+
+```{r setup, include=FALSE, echo=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+require("knitr")
+opts_knit$set(root.dir = wd)
+```
+
+Для работы нам понадобятся следующие пакеты. Они автоматически загрузятся при компиляции этого отчета.
+
+* [plyr](https://cran.r-project.org/web/packages/plyr/index.html)
+* [dplyr](https://cran.r-project.org/web/packages/dplyr/index.html)
+* [readr](https://cran.r-project.org/web/packages/readr/index.html)
+* [knitr](https://cran.r-project.org/web/packages/knitr/index.html)
+* [ggplot2](https://cran.r-project.org/web/packages/ggplot2/index.html)
+* [scales](https://cran.r-project.org/web/packages/scales/index.html)
+
+```{r packages, include=FALSE}
+library(plyr)
+library(dplyr)
+library(readr)
+library(ggplot2)
+library(car)
+library(scales)
+library(knitr)
+```
+
+### Задание 1. 
+#### Создание единого файла с данными в формате .csv
+
+Перед началом проверим, правильно ли установлена рабочая директорию, куда мы поместили наши файлы:
+
+```{r echo=FALSE}
+getwd()
+```
+
+Для того, чтобы объединить несколько файлов с данными формата .csv написана пользовательская функция, которая принимает на вход список файлов в рабочей директории. Список называется myfiles и генерируется автоматически. В результате работы функции формируется датафрейм dat_csv, содержащий все исходные данные, а так же последнюю графу в которой содержится название исходного файла, в нашем случае это имя студента собравшего данные.
+
+```{r}
+myfiles <- list.files(path = wd, pattern="*.csv", full.names=FALSE) #список путей до файлов в директории
+```
+
+```{r include=FALSE}
+read_csv_name <- function(myfiles){
+  result <- read_csv(myfiles)
+  result$Student <- myfiles
+  result
+}
+```
+
+```{r include=FALSE}
+dat_csv <- ldply(myfiles, read_csv_name)
+
+```
+В результате мы получаем следующий датафрейм (выведены только первые несколько строк):
+
+```{r}
+kable(head(dat_csv))
+```
+
+### Задание 2.
+#### Проверка данных на корректность
+В результате работы функции пользовательской функции мы получили датафрейм dat_csv содержащий `r nrow(dat_csv)` измерений по `r (ncol(dat_csv)-1)` признакам и информацию о том, кто собирал данные.
+Посмотрим на структуру полученного датафрейма:
+
+```{r echo=FALSE}
+str(dat_csv)
+```
+Я предлагаю внести следующие изменения:
+
+* сократить название второй колонки до "Sex";
+```{r}
+names(dat_csv)[2] <- "Sex" #заменили название на приличное
+```
+
+* проверить содержимое колонки "Sex";
+
+```{r}
+kable(table(dat_csv$Sex), col.names = c("Sex", "Number"), align = 'l') # кто то неправильно ввел переменные
+```
+
+* заменить неправильно внесенные данные в колонке "Sex";
+
+```{r}
+dat_csv2 <- dat_csv %>% mutate(Sex = replace(Sex, Sex == 'male', '1')) %>% mutate(Sex = replace(Sex, Sex == 'one', '1')) %>% mutate(Sex = replace(Sex, Sex == 'three', '3'))
+#исправили текстовые значения в графе Sex
+str(dat_csv2)
+```
+
+* изменить тип переменной "Sex" и "Student" на факторный, что необходимо для последующего статистического анализа, и присвоить значениям переменной "Sex" текстовые названия "male", "female", "juvenile";
+
+```{r}
+dat_csv2$Sex <- as.factor(dat_csv2$Sex) # изменить тип переменной SEX - это фактор
+dat_csv2$Student <- as.factor(dat_csv2$Student)
+str(dat_csv2)
+levels(dat_csv2$Sex) <- c("male", "female", "juvenile") #присвоили переменным приличные имена
+kable(table(dat_csv2$Sex), col.names = c("Sex", "Number"), align = 'l')
+```
+
+* изменить тип переменных Rings и Length на численный. Это необходимо для дальнейшего статистического анализа.
+
+```{r message=FALSE, warning=FALSE}
+dat_csv2$Rings <- as.numeric(dat_csv2$Rings)
+dat_csv2$Length <- as.numeric(dat_csv2$Length)
+```
+
+После внесенных изменений наш датафрейм имеет следующую структуру - 8 численных признаков и два факторных - пол моллюска и фамилия студента:
+```{r}
+str(dat_csv2)
+```
+
+В нашем датафрейме есть данные с пропущенными наблюдениями. Их всего `r sum(is.na(dat_csv2))` и они распределены следующим образом:
+
+```{r}
+kable(colSums(is.na(dat_csv2)), col.names = c("NA"))
+```
+
+Так как наш объем полученных наблюдений довольно велик, я предлагаю просто удалить эти наблюдения. При необходимости сохранить даже эти данные мы могли бы заменить отсутствующие значения на средние, однако наблюдения, где не указан пол моллюска, все равно пришлось бы удалить.
+
+```{r NAomit}
+snails <- na.omit(dat_csv2)
+```
+
+Теперь наш датафрейм после всех улучшений имеет название snails и готов к статистическому анализу.
+
+### Задание 3. 
+#### Рассчитай среднее значение и стандартное отклонение переменной Length для моллюсков разного пола.
+
+```{r}
+m <- snails %>% group_by(Sex) %>% summarise(mean=mean(Length), sd=sd(Length))
+kable(m)
+```
+
+### Задание 4.
+#### У какого процента моллюсков значение переменной Height не превышает 0.165?
+```{r}
+short_snails <- snails %>% filter(Height <= 0.165) 
+rate_of_short_snails <- nrow(short_snails) / nrow(snails) * 100
+```
+Доля моллюсков со значением переменной Height ниже или равное 0.165 составляет **`r round(rate_of_short_snails, digits = 2)`%**
+
+### Задание 5.
+#### Чему равняется значение переменной Length, которое выше чем у 92% от всех наблюдений?
+```{r}
+long_snails <- quantile(snails$Length, p = 0.92, names = FALSE)
+```
+Значение переменной Length, выше чем у 92% наблюдений составляет **`r long_snails`**.
+
+### Задание 6. 
+#### Создай новую переменную Lenght_z_scores и сохрани в нее значения переменной Length после её стандартизации.
+```{r}
+snails <- snails %>% mutate(Lenght_z_scores = scale(snails$Length))
+```
+Новая переменная Lenght_z_scores создана, теперь в нашем датафрейме snails 11 колонок:
+```{r}
+kable(head(snails))
+```
+
+### Задание 7.
+#### Сравни между собой диаметр моллюсков с числом колец 5 и 15. К каким выводам ты пришел? Пожалуйста, оформи результаты так, чтобы мы сразу могли использовать их для статьи.
+
+```{r 5_15_diameter_plot}
+plot7 <- snails %>%  filter(Rings %in% c(5,15)) 
+(ggplot(plot7, aes(x = factor(Rings), y = Diameter)) +
+  geom_boxplot()) + labs(x = "Rings", y = "Diameter") + ggtitle("Mean diameter values for snails with 5 or 15 rings")
+```
+
+Судя по внешнему виду графика выше, в среднем диаметр моллюсков с числом колец 5 меньше, чем диаметр моллюсков с 15 кольцами. Проверим статистическую достоверность полученного результата.
+
+```{r}
+rings5 <- subset(snails, Rings == 5)
+rings15 <- subset(snails, Rings == 15)
+normtest5 <- shapiro.test(rings5$Diameter)
+normtest15 <- shapiro.test(rings15$Diameter)
+vartest <- var.test(rings5$Diameter, rings15$Diameter)
+st <- t.test(rings5$Diameter, rings15$Diameter)
+```
+
+Для того чтобы проверить, есть ди статистически достоверные различия в диаметре моллюсков с числом колец 5 и 15, проведем тест Стьюдента. Распределение признака в обоих выборках является нормальным - проверено с помощью Шапиро теста (значения p-value составляют `r round(normtest5$p.value, 2)` и `r round(normtest15$p.value, 2)`) для субвыборки моллюсков с числом колец 5 и 15, соответственно. Дисперсии негомогенны - значение p-value для теста составляет `r round(vartest$p.value, 2)`. Следовательно, мы можем сравнить средние значения с помощью теста Стьюдента, который по умолчанию интерпретирует анализируемые выборки, как выборки с гетерогенной дисперсией. В данном случае p-value составляет `r round(st$p.value, 2)`. Следовательно, мы можем прийти к выводу, что диаметр моллюсков с числом колец 5 статистически достоверно ниже, чем диаметр моллюсков с 15 кольцами
+
+### Задание 8.
+#### Нас особенно интересуют переменные Diametr и Whole_weight. Что ты можешь про них сказать? Есть ли у нас основания предполагать, что они могут быть взаимосвязаны? Как ты это определил?
+
+Сначала оценим визуально возможную связь между двумя переменными:
+```{r message=FALSE, warning=FALSE}
+ggplot(snails, aes(Diameter, Whole_weight)) +
+  geom_point() +
+  geom_smooth() + labs(x = "Diameter", y = "Whole weight") + ggtitle("Distribution of Diameter and Whole weight")
+```
+Судя по графику с увеличением диаметра растет и вес моллюска. Проверим это с помощью корелляционного теста. Выбор корелляционного теста зависит от нормальности распределения исследуемых признаков, поэтому сначала проверим это с помощью теста Шапиро.
+
+```{r}
+normtestD <- shapiro.test(snails$Diameter)
+normtestWW <- shapiro.test(snails$Whole_weight)
+```
+
+Переменные Diameter и Whole_weight не распределены нормально - значения p.value `r scientific(normtestD$p.value, digits = 2)` и `r scientific(normtestWW$p.value, digits = 2)`. о в нашем случае выборка имеет большой объем, поэтому мы можем использовать любой тест - используем тест Пирсона.
+
+```{r}
+cor <- cor.test(snails$Diameter, snails$Whole_weight)
+```
+
+Уровень корелляции довольно высокий и составляет `r round(cor$estimate, 2)`(p-value `r scientific(cor$p.value, digits = 6)`). Таким образом мы можем сделать вывод о наличии сильной положительной корелляции между диаметром и весом моллюска.
+
+### Задание 9. 
+#### Влияет ли фактор "Student" на качество сбора данных.
+Чтобы дополнительно оценить качество данных, узнаем одинаково ли каждый из студентов проводил измерения. Для этого проведем однофакторный анализ, проверим воздействие фактора "Student" на полученные данные.
+
+```{r aov}
+H <- aov(Height~Student, data = snails)
+pH <- round(summary(H)[[1]][["Pr(>F)"]][[1]], 2)
+
+R <- (aov(Rings~Student, data = snails))
+pR <- round(summary(R)[[1]][["Pr(>F)"]][[1]], 2)
+
+L <- (aov(Length~Student, data = snails))
+pL <- round(summary(L)[[1]][["Pr(>F)"]][[1]], 2)
+
+D <- (aov(Diameter~Student, data = snails))
+pD <- round(summary(D)[[1]][["Pr(>F)"]][[1]], 2)
+
+WW <- (aov(Whole_weight~Student, data = snails))
+pWW <- round(summary(WW)[[1]][["Pr(>F)"]][[1]], 2)
+
+SW <- (aov(Shucked_weight~Student, data = snails))
+pSW <- round(summary(SW)[[1]][["Pr(>F)"]][[1]], 2)
+
+VW <- (aov(Viscera_weight~Student, data = snails))
+pVW <- round(summary(VW)[[1]][["Pr(>F)"]][[1]], 2)
+
+ShW <- (aov(Shell_weight~Student, data = snails))
+pShW <- round(summary(ShW)[[1]][["Pr(>F)"]][[1]], 2)
+```
+
+
+По результатам однофакторного анализа не выявлено воздействия фактора  "Student" на все имеющиеся количественные переменные. Далее приведены значения p-value для каждого из тестов: Rings `r pR`, Length `r pL`, Diameter `r pD`, Height `r pH`, Whole_weight `r pWW`, Shucked_ weight `r pSW`, Viscera_weight `r pVW`, Shell_weight `r pShW`.
+
+Таким образом, можно заключить, что все студенты одинаково обрабатывали материал и тот факт что, несколько человек собирали данные, не влияет на качество последних. 
+
+
+

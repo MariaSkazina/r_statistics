@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1572513738340.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3753286221",
+    "id" : "346204F8",
+    "lastKnownWriteTime" : 1572451498,
+    "last_content_update" : 1572451498,
+    "path" : "~/Bioinf/R/ggplot.R",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "61,12",
+        "scrollLine" : "0"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

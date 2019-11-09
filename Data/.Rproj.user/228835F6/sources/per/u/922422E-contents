@@ -1,0 +1,6 @@
+merge_csv <- function(x){
+  setwd(x)
+  mydir = x
+  myfiles = list.files(path = mydir, pattern="*.csv", full.names=TRUE) # делаю список из файлов в директории
+  dat_csv <- ldply(myfiles, read_csv) # создали один большой csv по списку файлов в директории
+}

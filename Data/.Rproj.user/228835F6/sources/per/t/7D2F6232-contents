@@ -1,0 +1,86 @@
+# step 2 apply(x, 1, mean, ...) 
+head(airquality)
+?airquality 
+# na.rm не надо загонять в скобки, это обозначено ... в аргументах функции
+apply(airquality, 2, mean, na.rm = T)  
+
+colMeans() # это даже лучше чем apply 
+colSums()
+rowMeans()
+rowSums()
+
+# step 3 
+set.seed(42)
+
+d <- as.data.frame(matrix(rnorm(30), nrow = 5))
+
+my_fun <- function(x) x * 2 # если код внутри функции суперпрост, то можно обойтись без {} и return,
+                            # R возвращает последнее рассчитанное значение
+
+d[1, 1] <- NA
+
+my_list <- list()
+for (i in seq_along(d)){ # создает последовательность от 1 до количества колонок
+  temp_col <- d[, i]
+  neg_numbers <- temp_col[temp_col < 0]
+  my_list[[i]] <- neg_numbers
+}
+names(my_list) <- colnames(d)
+
+my_list <- apply(d, 2, function(x) x[x < 0])
+
+
+find_negative <- function(x){
+  x[x < 0]
+}
+find_positive <- function(x){
+  x[x > 0]
+}
+
+apply(d, 2, find_positive)
+
+airquality[is.na(airquality)] <- 0
+
+get_negative_values <- function(test_data){	
+  test_data[is.na(test_data)] <- 0
+  apply(test_data[colSums(test_data < 0) > 0], 2, function(test_data) test_data[test_data < 0])
+}
+}
+
+
+# step 4
+apply(array, margin, ...)
+head(iris)
+
+aov_result <- apply(iris[, 1:4], 2, function(x) aov(x ~ iris$Species))
+
+norm_test <- apply(iris[, 1:4], 2, 
+                   function(x) shapiro.test(x))
+
+norm_test_p <- apply(iris[, 1:4], 2, function(x) shapiro.test(x)$p.value)
+
+
+str(aov_result)
+aov_result$Petal.Length
+norm_test$Petal.Width
+
+
+
+test_data <- as.data.frame(list(V1 = c(52, 58, 34, 44, 47, 33, 38, 34, 50, 49), V2 = c(41, 35, 49, 45, 55, 34, 45, 56, 37, 26), V3 = c("A", "A", "B", "A", "B", "B", "B", "A", "A", "B"), V4 = c("B", "A", "A", "A", "B", "A", "A", "A", "A", "B"), V5 = c(33, 39, 35, 42, 40, 27, 39, 39, 30, 40), V6 = c(41, 52, 38, 47, 44, 39, 45, 45, 47, 29), V7 = c(26, 28, 33, 36, 42, 49, 47, 47, 33, 40), V8 = c(42, 40, 33, 46, 42, 52, 47, 35, 34, 31)))
+general_mean <- 10
+
+
+
+one_sample_t <- function(test_data, general_mean){
+  nums <- unlist(lapply(test_data, is.numeric)) #сделали логический вектор на предмет численный или нет
+  x <- test_data[,nums] #отобрали только численные значения
+  res <- lapply(x, t.test, mu = general_mean) #посчитали критерий Стьюдента с заданным средним генеральной совокупности 
+  lapply(res, `[`, c('statistic', 'parameter','p.value')) #ЖОПА пытаюсь выцепить три нужных значения
+}
+one_sample_t(test_data, general_mean)
+
+lapply(modelset, `[`, c('likelihood', 'fixef'))
+get_value <- function(test_list){
+  lapply(res, '[', 'p.value') 
+  lapply(res, '[', 'df')
+}

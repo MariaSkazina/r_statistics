@@ -1,0 +1,80 @@
+library(ggplot2)
+ggplot(diamonds, aes(x=price))
+
+ggplot(diamonds, aes(x=price)) +
+  geom_histogram()
+        
+ggplot(diamonds, aes(price, carat, color = cut)) +
+  geom_point()+
+  geom_smooth()
+
+
+ggplot(diamonds, aes(x = price,y = carat)) +
+  geom_point(aes(color = cut))+
+  geom_smooth()
+
+library(dplyr)
+
+gr_airquality <- group_by(airquality, Month)
+t <- summarise(gr_airquality, mean_temp = mean(Temp), mean_wind = mean(Wind))
+
+ggplot(t, aes(Month, mean_temp))+
+  geom_line() +
+  geom_point(aes(size = mean_wind), color = "red")
+  
+ggplot(t, aes(Month, mean_temp))+
+  geom_line() +
+  geom_point(aes(size = mean_wind), color = "red") +
+  geom_hline(yintercept = 75, linetype = "dotted") +
+  geom_hline(yintercept = 70, linetype = "dashed", size = 1)
+
+gr_mtcars <- group_by(mtcars, am, vs)
+
+se_data <- summarise(gr_mtcars, mean_mpg = mean(mpg), 
+y_max = mean(mpg) + 1.96 * sd(mpg) / sqrt(length(mpg)),
+y_min = mean(mpg) - 1.96 * sd(mpg) / sqrt(length(mpg)))
+
+ggplot(se_data, aes(x = factor(am), y = mean_mpg, col = factor(vs), group = factor(vs))) +
+  geom_errorbar(aes(ymin = y_min, ymax = y_max), width = 0.2) +
+  geom_point(shape = 21, size = 4) +
+  geom_line()
+
+ggplot(se_data, aes(x = factor(am), y = mean_mpg)) +
+  geom_pointrange(aes(ymin = y_min, ymax = y_max))
+
+
+ggplot(se_data, aes(x = factor(am), y = mean_mpg)) +
+  geom_errorbar(aes(ymin = y_min, ymax = y_max), width = 0.2) +
+  geom_point(shape = 21, size = 4)
+
+
+
+
+ggplot(mtcars, aes(factor(am), mpg, col = factor(vs), group = factor(vs))) +
+  stat_summary(fun.data = mean_cl_boot, geom = 'errorbar', width = 0.2) +
+  stat_summary(fun.data = mean_cl_boot, geom = 'point') +
+    stat_summary(fun.data = mean_cl_boot, geom = 'line')
+
+my_plot <- ggplot(mtcars, aes(factor(am), mpg)) +
+  geom_violin() +
+  geom_boxplot(width = 0.2)
+
+sales = read.csv("https://stepic.org/media/attachments/course/724/sales.csv")
+
+library(ggplot2)
+
+my_plot <- ggplot(sales, aes(income, sale)) +
+ geom_point(aes(color = shop)) +
+ geom_smooth()
+
+my_plot <- ggplot(sales, aes(factor(shop), income, color = season)) +
+  stat_summary(fun.data = mean_cl_boot, geom = "pointrange", position = position_dodge(width = 0.5))
+
+
+my_plot <-  ggplot(sales, aes(date, sale, color = shop))+
+  stat_summary(fun.data = mean_cl_boot, geom = "errorbar", width = 0.2, position = position_dodge(width = 0.5)) + # добавим стандартную ошибку
+  stat_summary(fun.data = mean_cl_boot, geom = "point", position = position_dodge(width = 0.5)) + # добавим точки
+  stat_summary(fun.data = mean_cl_boot, geom = "line", position = position_dodge(width = 0.5)) # соединим линиями
+
+
+
