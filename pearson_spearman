@@ -1,0 +1,17 @@
+user_correlation <- function(user_df, method = "pearson"){
+  if (method == "pearson"){
+  result_p <- ((sum((user_df[,2] - mean(user_df[,2])) * (user_df[,1] - mean(user_df[,1])))/(length(user_df[,1])-1)) / (sd(user_df[,1]) * sd(user_df[,2])))
+  return(result_p)
+  } else if (method == "spearman"){
+    tx <- as.numeric(table(user_df[,1]))
+    ty <- as.numeric(table(user_df[,2]))
+    Lx <- sum((tx^3 - tx)/ 12)
+    Ly <- sum((ty^3 - ty)/ 12)
+    N <- length(user_df[,1])
+    sx2 <- (N^3 - N) / 12 - Lx
+    sy2 <- (N^3 - N) / 12 - Ly
+    result_s  <- (sx2 + sy2 - sum((rank(user_df[,1]) - rank(user_df[,2]))^2))/(2 * sqrt(sx2 * sy2))
+    return(result_s)
+  }
+}
+
